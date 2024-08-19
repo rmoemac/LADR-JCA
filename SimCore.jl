@@ -64,4 +64,22 @@ function simulate_orbital_encounter(t, y, t_span, LADR1, debris1, laser_output_p
     return [vx_l, vy_l, vz_l, ax_l, ay_l, az_l, vx_d, vy_d, vz_d, ax_d, ay_d, az_d]
 end
 
-initial_conditions = []
+#Declare all objects
+#debris
+sma_deb = 600e3
+deb_alt = sma_deb + R_earth
+debris1 = Debris(deb_alt,0,98.7,0.0,0.0,170.0)
+r_deb = debris1.r
+v_deb = debris1.v
+
+#laser
+hp_las = 560e3
+ha_las = 960e3
+sma_laser = (hp_las + ha_las)/2
+laser_alt = sma_laser + R_earth
+laser1 = LADR(laser_alt,0.028,90.1,-180.1,0,0)
+r_laser = laser1.r
+v_laser = laser1.v
+
+#put into IC vector
+initial_conditions = [r_laser,v_laser,r_deb,v_deb]
