@@ -1,8 +1,17 @@
 using Pkg
 Pkg.add("PyCall")
 Pkg.add("Conda")
-pyimport_conda("scipy.integrate", "scipy")
+Pkg.build("PyCall")
+Pkg.build("Conda")
 
 using PyCall
-# Import scipy's solve_ivp
-solve_ivp = pyimport("scipy.integrate").solve_ivp
+using Conda
+
+Conda.add("scipy")
+
+# Ensure scipy and its modules are imported correctly
+scipy_integrate = pyimport("scipy.integrate")
+scipy_constants = pyimport("scipy.constants")
+
+# Access solve_ivp directly
+solve_ivp = scipy_integrate.solve_ivp
