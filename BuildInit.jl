@@ -1,6 +1,9 @@
 using Pkg
 Pkg.add("PyCall")
 Pkg.add("Conda")
+Pkg.add("Plots")
+Pkg.add("PlotlyJS")
+
 Pkg.build("PyCall")
 Pkg.build("Conda")
 

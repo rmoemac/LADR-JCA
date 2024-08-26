@@ -1,8 +1,8 @@
 using LinearAlgebra
 
 # Define constants
-const G = 6.67430e-11  # Gravitational constant in m^3 kg^-1 s^-2
-const M_earth = 5.972e24  # Mass of the Earth in kg
+#const G = 6.67430e-11  # Gravitational constant in m^3 kg^-1 s^-2
+#const M_earth = 5.972e24  # Mass of the Earth in kg
 
 # Convert degrees to radians
 function deg2rad(deg)
@@ -61,7 +61,7 @@ function calculate_orbital_energy(v, r, mu)
 end
 
 # Function for calculate_momentum_change and delta_accel (placeholders, need proper implementation)
-function calculate_momentum_change(pulse_energy, drag_force, Cm, target_mass, laser_output_power, pulse_width)
+function calculate_momentum_change(Cm, target_mass, laser_output_power)
     laser_output_power = laser_output_power * 1e-6
     newtons = Cm * laser_output_power
     dt = 1e-6
@@ -71,7 +71,7 @@ function calculate_momentum_change(pulse_energy, drag_force, Cm, target_mass, la
     return delta_velocity
 end
 
-function calculate_accel_change(pulse_energy, Cm, target_mass, laser_output_power, pulse_width)
+function calculate_accel_change(Cm, target_mass, laser_output_power)
     newtons = Cm * (laser_output_power * 1e-6)
     thrust = newtons
     delta_accel = thrust / target_mass
