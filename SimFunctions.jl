@@ -8,6 +8,15 @@ using LinearAlgebra
 function deg2rad(deg)
     return deg * pi / 180.0
 end
+function generate_sphere(center, radius, resolution)
+    theta = LinRange(0, 2 * pi, resolution)
+    phi = LinRange(0, pi, resolution)
+    x = [center[1] + radius * sin(p) * cos(t) for p in phi, t in theta]
+    y = [center[2] + radius * sin(p) * sin(t) for p in phi, t in theta]
+    z = [center[3] + radius * cos(p) for p in phi, t in theta]
+    return x, y, z
+end
+
 
 # Function for converting orbital elements to ECI coordinates
 function orbital_elements_to_eci(a, e, i_deg, omega_deg, raan_deg, nu_deg)
@@ -97,3 +106,20 @@ function calculate_orbital_elements(r, v, mu)
     
     return a, e, e_vec, h
 end
+function calculate_distance(pos1::Vector{Float64}, pos2::Vector{Float64})
+    return norm(pos1 - pos2)
+end
+function sort_debris_by_distance(laser, debris_list)
+    laser_position = laser.r
+
+    # Compute distances and create a tuple of (debris, distance)
+    distances = [(debris, calculate_distance(laser_position, debris.r)) for debris in debris_list]
+
+    # Sort the tuple array based on distance (second element of each tuple)
+    sorted_debris = sort(distances, by=x -> x[2])
+
+    # Return only the sorted debris objects
+    return [x[1] for x in sorted_debris]
+end
+
+
