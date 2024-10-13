@@ -16,6 +16,31 @@ function generate_sphere(center, radius, resolution)
     z = [center[3] + radius * cos(p) for p in phi, t in theta]
     return x, y, z
 end
+function plot_kepler_variation(sim_output,laser_yn) #1 designates plotting lasers, 0 designates plotting debris
+    # Create a 3D plot
+    plt = plot()
+
+    # Iterate over each satellite
+    num_sats = size(sim_output,1)
+    num_timesteps = size(sim_output,2)
+    for sat in 1:num_sats
+        # Extract x, y, z coordinates for this satellite over time
+        x_coords = [sim_output[sat, t][1] for t in 1:num_timesteps]
+        y_coords = [sim_output[sat, t][2] for t in 1:num_timesteps]
+        z_coords = [sim_output[sat, t][3] for t in 1:num_timesteps]
+        
+        # Plot the trajectory of each satellite
+        if laser_yn == 1
+            plot!(x_coords, y_coords, z_coords, label="Satellite $sat")
+        else
+            plot!(x_coords, y_coords, z_coords, label="debris $sat")
+        end
+    end
+
+    # Show the plot
+    display(plt)
+    println("plotting complete")
+end
 
 
 # Function for converting orbital elements to ECI coordinates
@@ -52,6 +77,36 @@ function orbital_elements_to_eci(a, e, i_deg, omega_deg, raan_deg, nu_deg)
 
     return r_eci, v_eci
 end
+function generate_orbit_matrix(n::Int, m::Int)
+    # Initialize an n x m matrix with zeros
+    orbit_matrix = zeros(Float64, n, m)
+    
+    # You can fill the matrix with actual data 
+    # For example, let's assume the value represents a simple linear propagation
+    for i in 1:n
+        for j in 1:m
+            orbit_matrix[i, j] = i * j  # replace with actual propagation logic
+        end
+    end
+    
+    return orbit_matrix
+end
+
+function remove_every_other_3(arr)
+    n = length(arr)
+    result = []
+    
+    # Iterate over the array in steps of 6, keeping the first 3 each time
+    for i in 1:6:n
+        # Determine the end of the block of three
+        end_index = min(i+2, n)
+        # Append the first block of three values to the result
+        append!(result, arr[i:end_index])
+    end
+    
+    return result
+end
+
 
 # Function for calculating gravitational acceleration
 function calculate_gravitational_acceleration(x, y, z)
@@ -62,12 +117,109 @@ function calculate_gravitational_acceleration(x, y, z)
     return ax, ay, az
 end
 
+function print_progress(current, total)
+    percent = (current / total) * 100
+    print("\rProgress: ", round(percent, digits=2), "%")
+    flush(stdout)  # Ensure the output is flushed
+end
+
 # Function for calculating orbital energy
 function calculate_orbital_energy(v, r, mu)
     kinetic_energy = 0.5 * norm(v)^2
     potential_energy = r == 0 ? 0 : -mu / norm(r)
     return kinetic_energy + potential_energy
 end
+function extract_positions(results_yoshi, n_lasers, n_debris)
+    n_steps = length(results_yoshi)
+    laser_positions = [zeros(3, n_steps) for _ in 1:n_lasers]
+    debris_positions = [zeros(3, n_steps) for _ in 1:n_debris]
+
+    for (step_idx, (_, state)) in enumerate(results_yoshi)
+        for i in 1:n_lasers
+            laser_positions[i][:, step_idx] = state[(i-1)*3+1:(i-1)*3+3]
+        end
+        for i in 1:n_debris
+            debris_positions[i][:, step_idx] = state[(n_lasers+i-1)*3+1:(n_lasers+i-1)*3+3]
+        end
+    end
+    return laser_positions, debris_positions
+end
+function final_positions_magnitudes(debris_positions)
+    n_debris = length(debris_positions)
+    final_magnitudes = Float64[]
+    
+    for i in 1:n_debris
+        final_position = debris_positions[i][:, end]
+        magnitude = norm(final_position)
+        println(magnitude)
+        push!(final_magnitudes, magnitude)
+    end
+    
+    return final_magnitudes
+end
+function extract_final_state(results)
+    final_index = length(results)
+    x,y,z = results[final_index][2][1],results[final_index][2][2],results[final_index][2][3]
+    vx,vy,vz = results[final_index][2][4],results[final_index][2][5],results[final_index][2][6]
+    final_pos = [x,y,z]
+    final_vel = [vx,vy,vz]
+    return final_pos, final_vel
+
+end
+function extract_position_single(results_yoshi,n_debris)
+    n_steps = length(results_yoshi)
+    #laser_positions = [zeros(3, n_steps) for _ in 1:n_lasers]
+    debris_positions = [zeros(3, n_steps) for _ in 1:n_debris]
+
+    for (step_idx, (_, state)) in enumerate(results_yoshi)
+        # for i in 1:n_lasers
+        #     laser_positions[i][:, step_idx] = state[(i-1)*3+1:(i-1)*3+3]
+        # end
+        for i in 1:n_debris
+            debris_positions[i][:, step_idx] = state[(n_debris+i-1)*3+1:(n_debris+i-1)*3+3]
+        end
+    end
+    return debris_positions
+end
+
+function extract_velocity_single(results_yoshi,n_debris)
+    n_steps = length(results_yoshi)
+    #laser_positions = [zeros(3, n_steps) for _ in 1:n_lasers]
+    debris_velocities = [zeros(3, n_steps) for _ in 1:n_debris]
+
+    for (step_idx, (_, state)) in enumerate(results_yoshi)
+        # for i in 1:n_lasers
+        #     laser_positions[i][:, step_idx] = state[(i-1)*3+1:(i-1)*3+3]
+        # end
+        for i in 1:n_debris
+            debris_velocities[i][:, step_idx] = state[(n_debris+i-1)*3+4:(n_debris+i-1)*3+6]
+        end
+    end
+    return debris_velocities
+end
+function final_position(debris_positions)
+    n_debris = length(debris_positions)
+    final_positions = Float64[]
+    
+    for i in 1:n_debris
+        final_position = debris_positions[i][:, end]
+        push!(final_positions, final_position)
+    end
+    
+    return final_positions
+end
+function final_velocity(debris_velocities)
+    n_debris = length(debris_positions)
+    final_velocities = Float64[]
+    
+    for i in 1:n_debris
+        final_velocity = debris_velocities[i][:, end]
+        push!(final_velocities, final_velocity)
+    end
+    
+    return final_velocities
+end
+
 
 # Function for calculate_momentum_change and delta_accel (placeholders, need proper implementation)
 function calculate_momentum_change(Cm, target_mass, laser_output_power)

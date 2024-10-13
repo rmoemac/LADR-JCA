@@ -14,13 +14,8 @@ c3 = c2
 d1 = w1
 d3 = d1
 d2 = w0
-function print_progress(current, total)
-    percent = (current / total) * 100
-    print("\rProgress: ", round(percent, digits=2), "%")
-    flush(stdout)  # Ensure the output is flushed
-end
 
-function yoshida(tspan,y0,h,laser_power) #h is dt
+function yoshida(tspan,y0,h) #h is dt
     print("yoshida started")
     t0, tf = tspan
     t = t0
@@ -62,18 +57,17 @@ function yoshida(tspan,y0,h,laser_power) #h is dt
         if t + h > tf
             h = tf - t
         end
-        print_progress(t,tf)
 
         xi1 = xi .+ c1 .* vi .* h
-        axi1 = yoshi_orbital_encounter(t, xi1, vi,laser_power)
+        axi1 = yoshi_orbital_encounter(t, xi1, vi)
         vi1 = vi .+ (d1 .* axi1 .* h)
 
         xi2 = xi1 .+ c2 .* vi1 .* h
-        axi2 = yoshi_orbital_encounter(t, xi2, vi1,laser_power)
+        axi2 = yoshi_orbital_encounter(t, xi2, vi1)
         vi2 = vi1 .+ (d2 .* axi2 .* h)
 
         xi3 = xi2 .+ c3 .* vi2 .* h
-        axi3 = yoshi_orbital_encounter(t, xi3, vi2,laser_power)
+        axi3 = yoshi_orbital_encounter(t, xi3, vi2)
         vi3 = vi2 .+ (d3 .* axi3 .* h)
 
         # computing state at next timestep
@@ -81,19 +75,19 @@ function yoshida(tspan,y0,h,laser_power) #h is dt
         vi = vi3
 
         #repacking into acceptable output form
-        output = zeros(Float64, 6 * n_objects)
-        for i in 0:n_objects -1
-            output[i*6 + 1] = xi[i*3 + 1]
-            output[i*6 + 2] = xi[i*3 + 2]
-            output[i*6 + 3] = xi[i*3 + 3]
-            output[i*6 + 4] = vi[i*3 + 1]
-            output[i*6 + 5] = vi[i*3 + 2]
-            output[i*6 + 6] = vi[i*3 + 3]
-        end
+        # output = zeros(Float64, 6 * n_objects)
+        # for i in 0:n_objects -1
+        #     output[i*6 + 1] = xi[i*3 + 1]
+        #     output[i*6 + 2] = xi[i*3 + 2]
+        #     output[i*6 + 3] = xi[i*3 + 3]
+        #     output[i*6 + 4] = vi[i*3 + 1]
+        #     output[i*6 + 5] = vi[i*3 + 2]
+        #     output[i*6 + 6] = vi[i*3 + 3]
+        # end
 
         t += h
         
-        push!(results, (t, output))
+        # push!(results, (t, output))
     end
     
     return results
